@@ -9,8 +9,9 @@ BOOST_AUTO_TEST_SUITE(FirstSuite)
 BOOST_AUTO_TEST_CASE(test_default_constructor)
 {
     String s;
-    BOOST_CHECK_EQUAL(s, "");
     BOOST_CHECK_EQUAL(s.length(), 0);
+    BOOST_CHECK_EQUAL(s.size(), 0);
+    BOOST_CHECK_EQUAL(s, "");
 }
 
 BOOST_AUTO_TEST_CASE(test_cstr_constructor)
@@ -20,9 +21,10 @@ BOOST_AUTO_TEST_CASE(test_cstr_constructor)
     BOOST_CHECK_EQUAL(s1, some_str);
 
     try {
-        String s2(nullptr);
+        const char* null_cstr = nullptr;
+        String s2(null_cstr);
     } catch (std::exception& e) {
-        BOOST_CHECK(std::strcmp(e.what(), "String: Invalid construct argument\n"));
+        BOOST_CHECK_EQUAL(e.what(), "String: Invalid argument append(c_str)");
     }
 }
 
@@ -34,10 +36,11 @@ BOOST_AUTO_TEST_CASE(test_copy_constructor)
     BOOST_CHECK_EQUAL(s1.length(), valid_s.length());
 
     try {
-        String invalid_s(nullptr);
+        const char* null_cstr = nullptr;
+        String invalid_s(null_cstr);
         String s2(s1);
     } catch (std::exception& e) {
-        BOOST_CHECK(std::strcmp(e.what(), "String: Invalid construct argument\n"));
+        BOOST_CHECK_EQUAL(e.what(), "String: Invalid argument append(c_str)");
     }
 }
 
@@ -54,7 +57,11 @@ BOOST_AUTO_TEST_CASE(test_eq_operator)
 {
     String s1 = "Test";
     String s2 = s1;
-    BOOST_CHECK(s1 == s2);
+    BOOST_CHECK_EQUAL(s1, s2);
+
+    String s3(std::move(s1));
+    s1 = s3;
+    BOOST_CHECK_EQUAL(s1, s3);
 }
 
 BOOST_AUTO_TEST_CASE(test_plus_operator)
@@ -69,43 +76,63 @@ BOOST_AUTO_TEST_CASE(test_plus_operator)
 
     String s5 = s4 + cstr;
     BOOST_CHECK_EQUAL(s5, "Hello World!");
+    BOOST_CHECK_EQUAL(s5.size(), 13);
+    BOOST_CHECK_EQUAL(s5.length(), 12);
 
     String s6 = cstr + s4;
     BOOST_CHECK_EQUAL(s6, "World!Hello ");
 }
 
-BOOST_AUTO_TEST_CASE(test_push_back)
+BOOST_AUTO_TEST_CASE(test_pluseq_operator)
 {
-    String s1("Hello "); // len=6 cap=7
+    String s1 = "Hello ";
+    String s2 = "World";
+    s1 += s2;
+    BOOST_CHECK_EQUAL(s1, "Hello World");
 
-    BOOST_CHECK_EQUAL(s1.size(), 7);
-    BOOST_CHECK_EQUAL(s1.length(), 6);
+    const char* cstr = "!!!!";
+    s1 += cstr;
+    BOOST_CHECK_EQUAL(s1, "Hello World!!!!");
 
-    s1.push_back('m'); // len=7 cap=7
-    s1.push_back('y'); // len=8 cap=7*2=14
-
-    BOOST_CHECK_EQUAL(s1.length(), 8);
-    BOOST_CHECK_EQUAL(s1.size(), 14);
-
-    s1.push_back(' '); // len=9 cap=14
-    s1.push_back('p'); // len=10 cap=14
-    s1.push_back('o'); // len=11 cap=14
-    s1.push_back('n'); // len=12 cap=14
-    s1.push_back('y'); // len=13 cap=14
-    s1.push_back('!'); // len=14 cap=14
-    s1.push_back('!'); // len=15 cap=14*2=28
-
-    BOOST_CHECK_EQUAL(s1.length(), 15);
-    BOOST_CHECK_EQUAL(s1.size(), 28);
-    BOOST_CHECK_EQUAL(s1, "Hello my pony!!");
+    try {
+        const char* null_cstr = nullptr;
+        s1 += null_cstr;
+    } catch (std::exception& e) {
+        BOOST_CHECK_EQUAL(e.what(), "String: Invalid argument append(c_str)");
+    }
 }
 
-BOOST_AUTO_TEST_CASE(test_reserve)
+BOOST_AUTO_TEST_CASE(test_push_back_method)
+{
+    String s1("Hello "); // len=6 cap=8
+
+    BOOST_CHECK_EQUAL(s1.size(), 8);
+    BOOST_CHECK_EQUAL(s1.length(), 6);
+
+    s1.push_back('m'); // len=7 cap=8
+    s1.push_back('y'); // len=8 cap=8
+    s1.push_back(' '); // len=9 cap=8*2=16
+
+    BOOST_CHECK_EQUAL(s1.length(), 9);
+    BOOST_CHECK_EQUAL(s1.size(), 16);
+
+    s1.push_back('p'); // len=10 cap=16
+    s1.push_back('o'); // len=11 cap=16
+    s1.push_back('n'); // len=12 cap=16
+    s1.push_back('y'); // len=13 cap=16
+    s1.push_back('!'); // len=14 cap=16
+    s1.push_back('!'); // len=15 cap=16
+    s1.push_back('!'); // len=16 cap=16
+    s1.push_back('!'); // len=17 cap=16*2=32
+
+    BOOST_CHECK_EQUAL(s1.length(), 17);
+    BOOST_CHECK_EQUAL(s1.size(), 32);
+    BOOST_CHECK_EQUAL(s1, "Hello my pony!!!!");
+}
+
+BOOST_AUTO_TEST_CASE(test_reserve_method)
 {
     String s1("TEST");
-
-    BOOST_CHECK_EQUAL(s1.size(), 5);
-    BOOST_CHECK_EQUAL(s1.length(), 4);
     BOOST_CHECK_EQUAL(s1, "TEST");
 
     const size_t new_size = 100;
@@ -144,25 +171,48 @@ BOOST_AUTO_TEST_CASE(test_reserve_for_moved_string)
     BOOST_CHECK_EQUAL(s1.length(), 6);
 }
 
-BOOST_AUTO_TEST_CASE(test_append)
+BOOST_AUTO_TEST_CASE(test_append_method)
 {
-    String s1("Hello, ");
-    const char* s = "my little ";
-    String S("Pony!");
+    String string1("Hello, ");
+    String string2("Pony!");
+    const char* cstring = "my little ";
 
-    s1.append(s);
-    BOOST_CHECK_EQUAL(s1, "Hello, my little ");
+    string1.append(cstring);
+    BOOST_CHECK_EQUAL(string1, "Hello, my little ");
 
-    s1.append(S);
-    BOOST_CHECK_EQUAL(s1, "Hello, my little Pony!");
+    string1.append(string2);
+    BOOST_CHECK_EQUAL(string1, "Hello, my little Pony!");
 }
+
+BOOST_AUTO_TEST_CASE(test_clear_method)
+{
+    String s("Hello");
+    s.clear();
+    BOOST_CHECK_EQUAL(s.size(), 0);
+    BOOST_CHECK_EQUAL(s.length(), 0);
+    BOOST_CHECK_EQUAL(s, "");
+
+    String S1(s);
+    BOOST_CHECK_EQUAL(S1.size(), 0);
+    BOOST_CHECK_EQUAL(S1.length(), 0);
+    BOOST_CHECK_EQUAL(S1, "");
+
+    String S2(std::move(s));
+    BOOST_CHECK_EQUAL(S2.size(), 0);
+    BOOST_CHECK_EQUAL(S2.length(), 0);
+    BOOST_CHECK_EQUAL(S2, "");
+}
+
 
 BOOST_AUTO_TEST_CASE(test_iterator)
 {
     String s1("Hello");
     String s2, s3, s4, s5;
 
-    for (String::const_iterator it = s1.begin(); it != s1.end(); it++) {
+    String::iterator it = s1.begin();
+    *it = 'M';
+
+    for (String::iterator it = s1.begin(); it != s1.end(); it++) {
         s2.push_back(*it);
     }
 
@@ -180,11 +230,26 @@ BOOST_AUTO_TEST_CASE(test_iterator)
 
     BOOST_CHECK_EQUAL(s1, s4);
 
-    for (const auto c : s1) {
+    for (auto c : s1) {
         s5.push_back(c);
     }
 
     BOOST_CHECK_EQUAL(s1, s5);
+}
+
+BOOST_AUTO_TEST_CASE(test_const_iterator)
+{
+    String s1("Hello");
+    String s2;
+
+    //String::const_iterator it = s1.begin();
+    // *it = 'M'; // Should be Fail!
+
+    for (String::const_iterator it = s1.begin(); it != s1.end(); it++) {
+        s2.push_back(*it);
+    }
+
+    BOOST_CHECK_EQUAL(s1, s2);
 }
 
 
