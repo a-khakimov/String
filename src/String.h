@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
+
 #ifndef __CUSTOM_STRING_H__
 #define __CUSTOM_STRING_H__
 
@@ -24,8 +27,10 @@ public:
     void push_back (const char c);
     const char* data() const noexcept;
 
-    char& operator[] (const size_t pos) const;
     String& operator= (const String& other);
+    String& operator= (String&& other) noexcept;
+
+    char& operator[] (const size_t pos) const;
     String& operator+= (const String& other);
     String& operator+= (const char* cstr);
     bool operator< (const String& other) const;
@@ -91,6 +96,8 @@ public:
     const_iterator cend() const noexcept;
 
 private:
+    void move(String&) noexcept;
+
     size_t m_length = 0;
     size_t m_capacity = 0;
     char* m_data = nullptr;

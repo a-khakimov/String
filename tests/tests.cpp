@@ -1,3 +1,6 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
+
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE StringTest
 #include <boost/test/unit_test.hpp>
@@ -50,7 +53,7 @@ BOOST_AUTO_TEST_CASE(test_move_constructor)
 {
     String s1("Test");
     String s2(std::move(s1));
-    BOOST_CHECK(s2.empty());
+    BOOST_CHECK(s1.empty());
     BOOST_CHECK_NE(s1, s2);
     BOOST_CHECK_EQUAL(s2, "Test");
 }
@@ -64,6 +67,15 @@ BOOST_AUTO_TEST_CASE(test_eq_operator)
     String s3(std::move(s1));
     s1 = s3;
     BOOST_CHECK_EQUAL(s1, s3);
+}
+
+BOOST_AUTO_TEST_CASE(test_move_assigment_operator)
+{
+    String s1("Test");
+    String s2 = std::move(s1);
+    BOOST_CHECK(s1.empty());
+    BOOST_CHECK_NE(s1, s2);
+    BOOST_CHECK_EQUAL(s2, "Test");
 }
 
 BOOST_AUTO_TEST_CASE(test_plus_operator)

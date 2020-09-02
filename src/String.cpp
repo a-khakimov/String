@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 #include "String.h"
 #include <cstring>
 #include <exception>
@@ -24,12 +26,7 @@ String::String(const String& other)
 
 String::String(String&& other) noexcept
 {
-    m_data = other.m_data;
-    m_length = other.m_length;
-    m_capacity = other.m_capacity;
-    other.m_data = nullptr;
-    other.m_length = 0;
-    other.m_capacity = 0;
+    move(other);
 }
 
 String::~String()
@@ -70,7 +67,7 @@ void String::clear() noexcept
 
 bool String::empty() const noexcept
 {
-    return m_length;
+    return !(static_cast<bool>(m_length));
 }
 
 size_t String::length() const noexcept
@@ -134,8 +131,21 @@ char &String::operator[](const size_t pos) const
     return m_data[pos];
 }
 
+void String::move(String& other) noexcept
+{
+    m_data = other.m_data;
+    m_length = other.m_length;
+    m_capacity = other.m_capacity;
+    other.m_data = nullptr;
+    other.m_length = 0;
+    other.m_capacity = 0;
+}
+
 String& String::operator=(const String& other)
 {
+    if (this == &other) {
+        return *this;
+    }
     if (m_data != nullptr) {
         delete [] m_data;
     }
@@ -147,7 +157,13 @@ String& String::operator=(const String& other)
     return *this;
 }
 
-String& String::operator+=(const String &other)
+String& String::operator=(String&& other) noexcept
+{
+    move(other);
+    return *this;
+}
+
+String& String::operator+=(const String& other)
 {
     for (auto c : other) {
         push_back(c);
