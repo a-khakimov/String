@@ -23,6 +23,7 @@ BOOST_AUTO_TEST_CASE(test_cstr_constructor)
     try {
         const char* null_cstr = nullptr;
         String s2(null_cstr);
+        BOOST_ERROR("Where is exception?");
     } catch (std::exception& e) {
         BOOST_CHECK_EQUAL(e.what(), "String: Invalid argument append(c_str)");
     }
@@ -39,6 +40,7 @@ BOOST_AUTO_TEST_CASE(test_copy_constructor)
         const char* null_cstr = nullptr;
         String invalid_s(null_cstr);
         String s2(s1);
+        BOOST_ERROR("Where is exception?");
     } catch (std::exception& e) {
         BOOST_CHECK_EQUAL(e.what(), "String: Invalid argument append(c_str)");
     }
@@ -97,6 +99,7 @@ BOOST_AUTO_TEST_CASE(test_pluseq_operator)
     try {
         const char* null_cstr = nullptr;
         s1 += null_cstr;
+        BOOST_ERROR("Where is exception?");
     } catch (std::exception& e) {
         BOOST_CHECK_EQUAL(e.what(), "String: Invalid argument append(c_str)");
     }
@@ -203,6 +206,23 @@ BOOST_AUTO_TEST_CASE(test_clear_method)
     BOOST_CHECK_EQUAL(S2, "");
 }
 
+BOOST_AUTO_TEST_CASE(test_at_method)
+{
+    String s("Hello");
+    const char c1 = s.at(0);
+    BOOST_CHECK_EQUAL(c1, 'H');
+
+    try {
+        s.at(s.size() + 1);
+        BOOST_ERROR("Where is exception?");
+    } catch (std::exception& e) {
+        BOOST_CHECK_EQUAL(e.what(), "String: at() out of range");
+    }
+
+    BOOST_CHECK_EQUAL(s[0], 'H');
+    BOOST_CHECK_EQUAL(s[4], 'o');
+    BOOST_CHECK_EQUAL(s[5], '\0');
+}
 
 BOOST_AUTO_TEST_CASE(test_iterator)
 {
@@ -243,7 +263,7 @@ BOOST_AUTO_TEST_CASE(test_const_iterator)
     String s2;
 
     //String::const_iterator it = s1.begin();
-    // *it = 'M'; // Should be Fail!
+    //*it = 'M'; // Should be compile error!
 
     for (String::const_iterator it = s1.begin(); it != s1.end(); it++) {
         s2.push_back(*it);

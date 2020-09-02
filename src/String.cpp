@@ -86,7 +86,7 @@ size_t String::size() const noexcept
 char &String::at(const size_t pos) const
 {
     if (pos > m_length) {
-        throw std::out_of_range("String::at()");
+        throw std::out_of_range("String: at() out of range");
     }
     return m_data[pos];
 }
@@ -105,8 +105,8 @@ String& String::append(const char* s)
         throw std::logic_error("String: Invalid argument append(c_str)");
     }
 
-    const size_t s_length = std::strlen(s);
-    for (size_t i = 0; i < s_length; ++i) {
+    const size_t s_len = std::strlen(s);
+    for (size_t i = 0; i < s_len; ++i) {
         push_back(s[i]);
     }
 
@@ -164,7 +164,7 @@ String &String::operator+=(const char *cstr)
 bool String::operator<(const String &other) const
 {
     const size_t cmp_len = std::min(m_length, other.m_length);
-    return std::strncmp(m_data, other.m_data, cmp_len);
+    return (std::strncmp(m_data, other.m_data, cmp_len) < 0);
 }
 
 String::iterator String::begin() noexcept
@@ -209,13 +209,15 @@ bool operator==(const String& lstr, const char* rstr)
 
 bool operator==(const String &lstr, const String &rstr)
 {
-    if (!lstr.length() and !rstr.length()) { // for empty strings
+    const size_t llen = lstr.length();
+    const size_t rlen = rstr.length();
+    if (llen == 0 and rlen == 0) { // for empty strings
         return true;
     }
     if ((lstr.m_data == nullptr) or (rstr.m_data == nullptr)) {
         return false;
     }
-    return !std::strcmp(lstr.m_data, rstr.m_data);
+    return !std::strncmp(lstr.m_data, rstr.m_data, std::min(llen, rlen));
 }
 
 std::istream& operator>>(std::istream &is, String &str)
@@ -223,12 +225,11 @@ std::istream& operator>>(std::istream &is, String &str)
     str.clear();
     do {
         const char c = is.get();
-        if (c == '\n' || c == ' ')
+        if (not std::isgraph(c)) {
             break;
+        }
         str.push_back(c);
-    } while (true);
-
-    return is;
+    } while(true);
     return is;
 }
 
